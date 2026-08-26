@@ -7,5 +7,5 @@ resources:
 # Image Updater rewrites the newTag of this entry
 # when a newer image is pushed to Docker Hub.
 images:
-  - name: marytvk/local-k8s-ai-agent
+  - name: minhnghia2k3/local-k8s-ai-agent
     newTag: 776a2f9

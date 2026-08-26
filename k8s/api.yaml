@@ -47,7 +47,7 @@ spec:
       serviceAccountName: ai-devops-api
       containers:
         - name: api
-          image: marytvk/local-k8s-ai-agent:v3
+          image: minhnghia2k3/local-k8s-ai-agent:v3
           ports:
             - containerPort: 8000
           env:
