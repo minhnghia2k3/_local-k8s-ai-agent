@@ -4,15 +4,29 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from kubernetes import client, config
 from kubernetes.client.exceptions import ApiException
-import httpx
+from botocore.config import Config
+import boto3
+import asyncio
 import os
 
 app = FastAPI(title="Local K8s AI Agent")
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-OLLAMA_URL = os.getenv("OLLAMA_URL", "http://ollama:11434")
-MODEL = os.getenv("MODEL", "qwen2.5:0.5b")
+BEDROCK_REGION = os.getenv("BEDROCK_REGION", "us-east-1")
+INFERENCE_PROFILE = os.getenv(
+    "BEDROCK_INFERENCE_PROFILE",
+    "arn:aws:bedrock:us-east-1:716145636434:inference-profile/global.anthropic.claude-haiku-4-5-20251001-v1:0",
+)
+MAX_TOKENS = int(os.getenv("MAX_TOKENS", "1024"))
+MODEL = os.getenv("MODEL", "claude-haiku-4-5")
+
+bedrock = boto3.client(
+    "bedrock-runtime",
+    region_name=BEDROCK_REGION,
+    config=Config(retries={"max_attempts": 5, "mode": "adaptive"}),
+)
+
 DEFAULT_NAMESPACE = os.getenv("DEFAULT_NAMESPACE", "ai-devops")
 
 SYSTEM_PROMPT = """You are a DevOps assistant specializing in Kubernetes.
@@ -66,20 +80,20 @@ def health():
     return {"status": "ok", "k8s_api_available": K8S_AVAILABLE}
 
 
-async def call_ollama(prompt: str, system: str) -> str:
-    payload = {"model": MODEL, "prompt": prompt, "system": system, "stream": True}
-    async with httpx.AsyncClient(timeout=300.0) as c:
-        try:
-            resp = await c.post(f"{OLLAMA_URL}/api/generate", json=payload)
-            resp.raise_for_status()
-        except httpx.RequestError as e:
-            raise HTTPException(status_code=503, detail=f"Ollama unreachable: {e}")
-    return resp.json()["response"]
+async def call_bedrock(prompt: str, system: str) -> str:
+    resp = await asyncio.to_thread(
+        bedrock.converse,
+        modelId=INFERENCE_PROFILE,
+        system=[{"text": system}],
+        messages=[{"role": "user", "content": [{"text": prompt}]}],
+        inferenceConfig={"maxTokens": MAX_TOKENS},
+    )
+    return resp["output"]["message"]["content"][0]["text"]
 
 
 @app.post("/ask", response_model=Answer)
 async def ask(query: Query):
-    answer = await call_ollama(query.question, SYSTEM_PROMPT)
+    answer = await call_bedrock(query.question, SYSTEM_PROMPT)
     return Answer(answer=answer, model=MODEL)
 
 
@@ -138,13 +152,6 @@ async def diagnose(req: DiagnoseRequest):
 User question: {req.question}
 
 Analyze the cluster state above and answer the question. Reference specific pods, events, or log lines."""
-    answer = await call_ollama(prompt, DIAGNOSE_PROMPT)
+    answer = await call_bedrock(prompt, DIAGNOSE_PROMPT)
     return DiagnoseResponse(answer=answer, model=MODEL, context=context)
-
-
-@app.get("/models")
-async def list_models():
-    async with httpx.AsyncClient(timeout=10.0) as c:
-        resp = await c.get(f"{OLLAMA_URL}/api/tags")
-        return resp.json()
 

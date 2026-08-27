@@ -12,3 +12,5 @@ venv/
 .vscode/
 .idea/
 *.swp
+
+k8s/secrets.yaml

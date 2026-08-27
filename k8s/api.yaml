@@ -47,14 +47,15 @@ spec:
       serviceAccountName: ai-devops-api
       containers:
         - name: api
-          image: minhnghia12305/local-k8s-ai-agent:v1
+          image: minhnghia12305/local-k8s-ai-agent:v2
           ports:
             - containerPort: 8000
           env:
-            - name: OLLAMA_URL
-              value: "http://ollama:11434"
-            - name: MODEL
-              value: "qwen2.5:0.5b"
+            - name: AWS_DEFAULT_REGION
+              value: "us-east-1"
+          envFrom:
+            - secretRef:
+                name: aws-creds
           readinessProbe:
             httpGet:
               path: /health
