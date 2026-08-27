@@ -8,4 +8,4 @@ resources:
 # when a newer image is pushed to Docker Hub.
 images:
   - name: minhnghia12305/local-k8s-ai-agent
-    newTag: v1
+    newTag: v2
