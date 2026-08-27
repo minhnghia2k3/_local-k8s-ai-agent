@@ -12,7 +12,7 @@ app = FastAPI(title="Local K8s AI Agent")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://ollama:11434")
-MODEL = os.getenv("MODEL", "mistral")
+MODEL = os.getenv("MODEL", "qwen2.5:0.5b")
 DEFAULT_NAMESPACE = os.getenv("DEFAULT_NAMESPACE", "ai-devops")
 
 SYSTEM_PROMPT = """You are a DevOps assistant specializing in Kubernetes.
@@ -67,7 +67,7 @@ def health():
 
 
 async def call_ollama(prompt: str, system: str) -> str:
-    payload = {"model": MODEL, "prompt": prompt, "system": system, "stream": False}
+    payload = {"model": MODEL, "prompt": prompt, "system": system, "stream": True}
     async with httpx.AsyncClient(timeout=300.0) as c:
         try:
             resp = await c.post(f"{OLLAMA_URL}/api/generate", json=payload)
