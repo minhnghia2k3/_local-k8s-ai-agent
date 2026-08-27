@@ -13,7 +13,7 @@ spec:
     - namePattern: "local-k8s-ai-agent"
       images:
         - alias: api
-          imageName: minhnghia2k3/local-k8s-ai-agent
+          imageName: minhnghia12305/local-k8s-ai-agent
           commonUpdateSettings:
             updateStrategy: newest-build
             allowTags: "regexp:^[0-9a-f]{7}$"

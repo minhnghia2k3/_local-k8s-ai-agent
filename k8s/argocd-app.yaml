@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/MaryamTavakkoli/local-k8s-ai-agent.git
+    repoURL: https://github.com/minhnghia2k3/_local-k8s-ai-agent
     targetRevision: main
     path: k8s
   destination:
