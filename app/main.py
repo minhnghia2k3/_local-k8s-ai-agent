@@ -155,4 +155,4 @@ Analyze the cluster state above and answer the question. Reference specific pods
     answer = await call_bedrock(prompt, DIAGNOSE_PROMPT)
     return DiagnoseResponse(answer=answer, model=MODEL, context=context)
 
-# Now with CI/CD
+# Now with CI/CDs
